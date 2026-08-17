@@ -1,0 +1,73 @@
+[project]
+name = "inherent"
+version = "0.3.0"
+description = "CLI for running and inspecting a local Inherent stack"
+readme = "Readme.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27.2",
+    "rich>=13.9.0",
+    "typer>=0.12.5",
+]
+
+[project.scripts]
+inherent = "inherent_cli.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.2",
+    "ruff==0.14.10",
+    "black==24.10.0",
+    "mypy==1.19.1",
+    "bandit[toml]==1.9.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/inherent_cli"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/inherent_cli/data/docker-compose.release.yml" = "inherent_cli/data/docker-compose.release.yml"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "unit: fast isolated unit tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+# B101: assert_used (used in tests). B404/B603/B607: this CLI's job is to shell
+# out to `docker`/`docker compose`/`claude` with fixed, hardcoded argv lists and
+# never `shell=True`, so no untrusted input is composed into a shell command.
+skips = ["B101", "B404", "B603", "B607"]
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+    "ruff==0.14.10",
+    "black==24.10.0",
+    "mypy==1.19.1",
+    "bandit[toml]==1.9.3",
+]

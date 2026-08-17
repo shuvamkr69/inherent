@@ -235,6 +235,24 @@ sample document, wait for ingestion, search indexed content, inspect logs, and
 reset your local stack. The [docs index](docs/README.md) is organized for
 agent-first discovery.
 
+### Checkout-Free CLI
+
+Install the CLI when you want to run Inherent from published images without a
+repository checkout:
+
+```bash
+pip install inherent
+inherent up
+inherent whoami
+inherent docs upload docs/examples/sample-documents/sample.txt
+inherent search "what retrieval modes does Inherent support"
+```
+
+`inherent up` extracts the bundled release Compose file, starts the local stack,
+runs the one-shot `bootstrap` service, and saves the local API key in
+`~/.inherent/config.toml`. Set `INHERENT_URL` and `INHERENT_API_KEY` to point
+read commands at an existing deployment instead.
+
 ## Run from published images (no build)
 
 If you just want to *use* Inherent rather than develop it, you don't need to
@@ -256,6 +274,13 @@ INHERENT_VERSION=latest docker compose -f docker-compose.release.yml up -d
 curl -O https://raw.githubusercontent.com/inherent-prime/inherent/main/scripts/dev/bootstrap.sh
 PG_CONTAINER=inherent-oss-postgres MONGO_CONTAINER=inherent-oss-mongodb \
   bash bootstrap.sh
+```
+
+If you use the CLI-managed release stack, run the in-image bootstrap service
+instead of downloading the script:
+
+```bash
+docker compose --profile bootstrap run --rm bootstrap
 ```
 
 The stack initializes the database automatically: an init container runs the

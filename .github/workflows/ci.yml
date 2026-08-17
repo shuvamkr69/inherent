@@ -316,6 +316,7 @@ jobs:
     needs:
       - service-checks
       - root-tests
+      - cli-checks
     if: always()
     steps:
       # "skipped" is an accepted outcome alongside "success": both dependants
@@ -334,8 +335,56 @@ jobs:
             exit 1
           fi
 
+          if [ "${{ needs.cli-checks.result }}" != "success" ] && [ "${{ needs.cli-checks.result }}" != "skipped" ]; then
+            echo "::error::CLI checks failed. Do not merge until CI is green."
+            exit 1
+          fi
+
           if [ "${{ needs.service-checks.result }}" = "skipped" ]; then
             echo "Service checks skipped -- PR touches only docs/non-software paths."
           else
             echo "All service checks passed."
           fi
+
+  cli-checks:
+    name: inh-cli checks
+    runs-on: ubuntu-latest
+    needs: changes
+    # Same docs-only skip gate as service-checks/root-tests: a PR that touches
+    # no software paths skips this, and required-tests accepts "skipped".
+    if: needs.changes.outputs.software != 'false'
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/inh-cli
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev --group dev
+
+      - name: Lint
+        run: uv run ruff check src tests
+
+      - name: Format check
+        run: uv run black --check src tests
+
+      - name: Type check
+        run: uv run mypy src
+
+      - name: Security check
+        run: uv run bandit -c pyproject.toml -r src
+
+      - name: Test
+        run: uv run pytest

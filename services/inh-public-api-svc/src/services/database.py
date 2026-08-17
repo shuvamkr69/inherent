@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from src.config import settings
 from src.models.api_key import APIKeyInfo
 from src.models.document import Document, DocumentChunk
+from src.models.identity import APIKeySummary, WorkspaceSummary
 from src.services.metrics import record_workspace_ownership_lookup_degraded
 from src.utils import get_logger
 
@@ -849,6 +850,98 @@ class DatabaseService:
             record_workspace_ownership_lookup_degraded(source="postgres_fallback")
 
         return list(ws_ids)
+
+    async def get_workspace_summaries(self, workspace_ids: list[str]) -> list[WorkspaceSummary]:
+        """Return safe display metadata for the requested workspaces.
+
+        Missing workspace documents are omitted. Callers that already know an id
+        can fall back to the id itself, which preserves access semantics even if
+        Mongo is temporarily incomplete.
+        """
+        if not workspace_ids:
+            return []
+
+        from bson import ObjectId
+        from bson.errors import InvalidId
+
+        from src.services.mongo_client import get_mongo_client
+
+        raw_ids: list[Any] = []
+        for workspace_id in workspace_ids:
+            raw_ids.append(workspace_id)
+            try:
+                raw_ids.append(ObjectId(workspace_id))
+            except (InvalidId, TypeError, ValueError):
+                pass
+
+        client = get_mongo_client()
+        db = client[settings.mongodb_db_name]
+        cursor = db["workspaces"].find(
+            {"_id": {"$in": raw_ids}}, {"_id": 1, "name": 1, "user_id": 1}
+        )
+        summaries: list[WorkspaceSummary] = []
+        async for doc in cursor:
+            summaries.append(
+                WorkspaceSummary(
+                    id=str(doc["_id"]),
+                    name=doc.get("name"),
+                    user_id=str(doc["user_id"]) if doc.get("user_id") is not None else None,
+                )
+            )
+        return summaries
+
+    async def list_admin_workspaces(self) -> list[WorkspaceSummary]:
+        """List local workspaces for the read-only admin inventory endpoint."""
+        from src.services.mongo_client import get_mongo_client
+
+        client = get_mongo_client()
+        db = client[settings.mongodb_db_name]
+        cursor = db["workspaces"].find({}, {"_id": 1, "name": 1, "user_id": 1}).sort("_id", 1)
+        workspaces: list[WorkspaceSummary] = []
+        async for doc in cursor:
+            workspaces.append(
+                WorkspaceSummary(
+                    id=str(doc["_id"]),
+                    name=doc.get("name"),
+                    user_id=str(doc["user_id"]) if doc.get("user_id") is not None else None,
+                )
+            )
+        return workspaces
+
+    async def list_admin_api_keys(self) -> list[APIKeySummary]:
+        """List key metadata only; never return hashes or plaintext secrets."""
+        async with self.session() as session:
+            result = await session.execute(
+                text(
+                    """
+                    SELECT key_id, key_prefix, user_id, workspace_id, name, status,
+                           permissions, rate_limit, expires_at, last_used_at, created_at
+                    FROM api_keys
+                    ORDER BY created_at DESC, key_id ASC
+                    """
+                )
+            )
+            keys: list[APIKeySummary] = []
+            for row in result.fetchall():
+                permissions = row.permissions if isinstance(row.permissions, list) else []
+                keys.append(
+                    APIKeySummary(
+                        key_id=str(row.key_id),
+                        key_prefix=str(row.key_prefix),
+                        user_id=str(row.user_id),
+                        workspace_id=(
+                            str(row.workspace_id) if row.workspace_id is not None else None
+                        ),
+                        name=str(row.name),
+                        status=str(row.status),
+                        permissions=permissions,
+                        rate_limit=int(row.rate_limit),
+                        expires_at=row.expires_at,
+                        last_used_at=row.last_used_at,
+                        created_at=row.created_at,
+                    )
+                )
+            return keys
 
     async def user_owns_workspace_in_mongo(self, user_id: str, workspace_id: str) -> bool:
         """Authoritative, MONGO-ONLY ownership check for ONE (user, workspace)

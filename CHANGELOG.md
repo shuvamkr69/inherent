@@ -26,6 +26,14 @@ All notable changes to Inherent are documented here. The format follows
 
 ### Added
 
+- Added the pip-installable `inherent` CLI (`up`/`down`/`status`/`logs`/`doctor`,
+  `docs`, `chunks`, `search`, `whoami`, `workspaces`, `keys`, `connect`),
+  `GET /v1/whoami`, read-only local admin inventory endpoints
+  (`GET /v1/admin/workspaces`, `GET /v1/admin/keys`, gated by
+  `ADMIN_API_ENABLED`), and an in-image Compose `bootstrap` service that
+  idempotently seeds a local workspace and API key for checkout-free local
+  stacks. (#275)
+
 - **Evals: `POST /v1/evals/runs` accepts optional replay scoping, and
   `DELETE /v1/evals/events` an opt-in case purge (#250).** Run-replay was
   unscoped — `start_run` and `execute_run` each independently selected *every*

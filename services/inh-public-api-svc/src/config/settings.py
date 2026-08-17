@@ -198,6 +198,16 @@ class Settings(BaseSettings):
     )
     api_key_header_name: str = "X-API-Key"
 
+    # Local/operator read-only visibility for the pip-installable CLI (#275).
+    # Disabled by default so hosted/SaaS deployments do not expose a cross-user
+    # inventory surface. The local release compose profile enables it for stack
+    # visibility commands such as `inherent workspaces list` and `inherent keys list`.
+    admin_api_enabled: bool = Field(
+        default=False,
+        alias="ADMIN_API_ENABLED",
+        description="Enable read-only local admin inventory endpoints under /v1/admin.",
+    )
+
     # RFC 7807 error `type` base URL (#222). The retired `.systems` domain used
     # to be hardcoded straight into src/config/constants.py, so a domain change
     # was a repo-wide grep-and-replace and every served `type` pointed at a dead

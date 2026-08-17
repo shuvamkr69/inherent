@@ -285,6 +285,7 @@ services:
       EMBEDDING_ENABLED: "true"
       EMBEDDING_SERVICE_URL: http://text-embeddings-inference:80
       EMBEDDING_DIM: 384
+      ADMIN_API_ENABLED: "true"
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DB_NAME: main
       LOG_LEVEL: INFO
@@ -380,6 +381,39 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    networks:
+      - inherent-oss
+
+  bootstrap:
+    build:
+      context: .
+      dockerfile: services/inh-public-api-svc/Dockerfile
+    container_name: inherent-oss-bootstrap
+    profiles: ["bootstrap"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-knowledge_base}
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB_NAME: main
+      API_KEY: ${API_KEY:-ink_dev_local_key_001}
+      KEY_ID: ${KEY_ID:-}
+      USER_ID: ${USER_ID:-local-dev-user}
+      WORKSPACE_ID: ${WORKSPACE_ID:-ws_local_001}
+      KEY_NAME: ${KEY_NAME:-Local Dev Key}
+      WORKSPACE_NAME: ${WORKSPACE_NAME:-Local Dev Workspace}
+      SEED_PRINCIPAL_B: ${SEED_PRINCIPAL_B:-}
+      API_KEY_B: ${API_KEY_B:-ink_dev_local_key_002}
+      KEY_ID_B: ${KEY_ID_B:-}
+      USER_ID_B: ${USER_ID_B:-local-dev-user-b}
+      WORKSPACE_ID_B: ${WORKSPACE_ID_B:-ws_local_002}
+      KEY_NAME_B: ${KEY_NAME_B:-Local Dev Key B}
+      WORKSPACE_NAME_B: ${WORKSPACE_NAME_B:-Local Dev Workspace B}
+    command: ["python", "-m", "src.scripts.bootstrap_control_plane"]
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
     networks:
       - inherent-oss
 

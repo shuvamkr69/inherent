@@ -78,6 +78,23 @@ For a deeper readiness check:
 curl -s "$API_BASE/health/ready" | jq .
 ```
 
+### CLI-Managed Local Stack
+
+For a checkout-free local stack, install the CLI and let it run the release
+Compose file from the wheel:
+
+```bash
+pip install inherent
+inherent up
+inherent status
+inherent whoami
+```
+
+The CLI stores local connection settings under `~/.inherent/`. Read commands
+also honor `INHERENT_URL`, `INHERENT_API_KEY`, and `INHERENT_WORKSPACE_ID`, so
+agents can run the same commands against another deployment without rewriting
+the saved local config.
+
 ## 3. Upload a Sample Document
 
 Upload the committed sample text file through the public API:
@@ -217,6 +234,9 @@ Promoted eval cases persist until you disable them via
 | `make down` | Stop the stack. |
 | `make clean` | Stop the stack and remove local Compose volumes. |
 | `make check` | Run validation, lint, formatting, typing, security checks, and tests. |
+| `inherent up` | Start the published-image stack and run the one-shot bootstrap service. |
+| `inherent doctor` | Probe health/readiness from the saved CLI config. |
+| `inherent connect claude --print` | Print the Streamable HTTP MCP connection command. |
 
 ## Troubleshooting
 

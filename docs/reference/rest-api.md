@@ -39,6 +39,24 @@ ACL or clearance parameter. See the
 
 ## Endpoints
 
+### Identity
+
+| Method | Path | Permission | Purpose |
+| --- | --- | --- | --- |
+| GET | `/v1/whoami` | authenticated key | Current key identity: `key_id`, `user_id`, optional scoped `workspace_id`, permissions, rate limit, engine version, and authorized workspaces. Used by agent clients and the `inherent` CLI |
+
+### Local admin inventory
+
+These endpoints are disabled by default and return `404` unless
+`ADMIN_API_ENABLED=true`. The local Compose and release Compose stacks enable
+them so the CLI can inspect a self-hosted local stack. They are read-only and
+never return API key hashes or plaintext key values.
+
+| Method | Path | Permission | Purpose |
+| --- | --- | --- | --- |
+| GET | `/v1/admin/workspaces` | authenticated key + `ADMIN_API_ENABLED=true` | List workspace ids, names, and owners from MongoDB |
+| GET | `/v1/admin/keys` | authenticated key + `ADMIN_API_ENABLED=true` | List API key metadata: key id, key prefix, owner, optional workspace scope, name, status, permissions, rate limit, and timestamps |
+
 ### Health & observability (no auth)
 
 | Method | Path | Purpose |

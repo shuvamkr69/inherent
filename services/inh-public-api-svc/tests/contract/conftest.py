@@ -143,6 +143,9 @@ def single_workspace_db(sample_document: Document) -> AsyncMock:
     """A mock DB whose user owns exactly one workspace (``ws-1``)."""
     db = AsyncMock()
     db.get_user_workspace_ids = AsyncMock(return_value=["ws-1"])
+    db.get_workspace_summaries = AsyncMock(return_value=[])
+    db.list_admin_workspaces = AsyncMock(return_value=[])
+    db.list_admin_api_keys = AsyncMock(return_value=[])
     db.get_document = AsyncMock(return_value=sample_document)
     db.get_document_by_id = AsyncMock(return_value=sample_document)
     db.get_documents = AsyncMock(return_value=([sample_document], 1))
@@ -173,6 +176,9 @@ def multi_workspace_db(sample_document: Document) -> AsyncMock:
     """A mock DB whose user owns two workspaces (``ws-1`` and ``ws-2``)."""
     db = AsyncMock()
     db.get_user_workspace_ids = AsyncMock(return_value=["ws-1", "ws-2"])
+    db.get_workspace_summaries = AsyncMock(return_value=[])
+    db.list_admin_workspaces = AsyncMock(return_value=[])
+    db.list_admin_api_keys = AsyncMock(return_value=[])
     db.get_document = AsyncMock(return_value=sample_document)
     db.get_document_by_id = AsyncMock(return_value=sample_document)
     db.get_documents_multi_workspace = AsyncMock(return_value=([sample_document], 1))

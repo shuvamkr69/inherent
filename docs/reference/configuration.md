@@ -86,6 +86,7 @@ and binds all datastore ports to `127.0.0.1`.
 | Variable | Default | Effect |
 | --- | --- | --- |
 | `API_KEY_HEADER_NAME` | `X-API-Key` | Header carrying the client API key |
+| `ADMIN_API_ENABLED` | `false` | Enables read-only `/v1/admin/workspaces` and `/v1/admin/keys` inventory endpoints for local/operator CLI use. The Compose stacks set it to `true`; hosted deployments should leave it off unless they intentionally expose local inventory visibility |
 | `ENABLE_HSTS` | `true` | Emit HSTS header in production |
 | `ERROR_BASE_URL` | `https://api.inherent.sh/errors` | Base URL for every served RFC 7807 problem `type` URI (dev default should be `https://dev-api.inherent.sh/errors`). One setting, not a hardcoded domain (#222) |
 | `CORS_ORIGINS` | inherent.sh origins | Allowed origins (wildcard in dev if unchanged) |
