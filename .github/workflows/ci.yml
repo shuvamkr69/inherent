@@ -55,8 +55,13 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
-          git fetch origin "$BASE_REF"
-          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          # Resolve the base ref from the UPSTREAM repo, not `origin`: on a fork
+          # PR `origin` is the contributor's fork, so `origin/$BASE_REF` is the
+          # fork's stale base and the diff comes out wrong. `$GITHUB_REPOSITORY`
+          # is always the base repo for `pull_request` events (#299).
+          UPSTREAM="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          git fetch "$UPSTREAM" "$BASE_REF"
+          git diff --name-only FETCH_HEAD HEAD > changed.txt
           echo "Changed files:" && cat changed.txt
 
           # An allowlist of paths that cannot affect the running software

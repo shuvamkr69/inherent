@@ -140,8 +140,9 @@ def test_job_name_is_exactly_conventions() -> None:
 def test_checkout_uses_full_history() -> None:
     """The diff step needs the base branch's history, not a shallow clone.
 
-    `git diff origin/<base>...HEAD` fails on a `fetch-depth: 1` checkout
-    because the merge-base commit is not present locally.
+    `git diff FETCH_HEAD HEAD` (against the fetched upstream base, #299) fails
+    on a `fetch-depth: 1` checkout because the merge-base commit is not present
+    locally.
     """
     text = _text()
     assert re.search(r"fetch-depth:\s*0", text), (
